@@ -23,7 +23,6 @@
             inherit system;
             overlays = [rust-overlay.overlays.default];
           };
-          system = "x86_64-linux";
           packages = [
             # file://$(rustc --print sysroot)/share/doc/rust/html
             (pkgs.rust-bin.nightly."2024-06-28".default.override {
@@ -49,14 +48,14 @@
             # hyperfine --show-output --warmup 5 --min-runs 10 "./target/release/filestat --path /home/marts"
           ];
         in {
-          devShells.${system} = rec {
+          devShells = rec {
             default = dev;
             dev = pkgs.mkShell {
               buildInputs = packages;
               shellHook = "export RUST_LOG=trace";
             };
           };
-          packages.${system} = {
+          packages = {
             default = pkgs.rustPlatform.buildRustPackage {
               pname = "systemd-failed";
               version = "0.0.1";
