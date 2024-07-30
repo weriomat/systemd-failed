@@ -1,0 +1,25 @@
+[package]
+name = "systemd-failed"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+
+# logging
+log = { version = "0.4.21"}
+systemd-journal-logger = "2.1.1"
+
+# for command line args
+clap = {version = "4.5.8", features = ["derive"]}
+
+# for hostname
+rustix = {version = "0.38.34", features = ["system"]}
+
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+
