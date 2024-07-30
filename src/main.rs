@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::Parser;
+// use clap::Parser;
 use log::{error, info, LevelFilter};
 use rustix;
 use std::{
@@ -10,14 +10,14 @@ use std::{
 };
 use systemd_journal_logger::JournalLog;
 
-/// Simple program to querry failed systemd units and notify given email
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// Email to send a Mail to
-    #[arg(short, long, default_value_t = String::from("engel@weriomat.com"))]
-    email: String,
-}
+// /// Simple program to querry failed systemd units and notify given email
+// #[derive(Parser, Debug)]
+// #[command(version, about, long_about = None)]
+// struct Args {
+//     /// Email to send a Mail to
+//     #[arg(short, long, default_value_t = String::from("engel@weriomat.com"))]
+//     email: String,
+// }
 
 #[derive(Debug)]
 struct FailedUnits {
@@ -157,7 +157,7 @@ fn main() {
     log::set_max_level(LevelFilter::Info);
 
     // parse the args
-    let args = Args::parse();
+    // let args = Args::parse();
 
     info!("Systemd failed started");
 
@@ -166,7 +166,8 @@ fn main() {
         return;
     }
 
-    match run_check(args.email) {
+    // match run_check(args.email) {
+    match run_check("engel@weriomat.com".into()) {
         Ok(val) => {
             println!("Res: {val:?}");
             if val.number == 0 {
