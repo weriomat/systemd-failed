@@ -114,7 +114,7 @@ fn run_check(mail: String) -> Result<FailedUnits> {
         string_to_send.push_str(&pre);
         string_to_send.push_str(&f);
         // string_to_send.push_str("\"");
-        println!("a: {string_to_send}");
+        // println!("a: {string_to_send}");
 
         // Add failed unit
         fu.add_failed(f);
@@ -132,7 +132,7 @@ fn run_check(mail: String) -> Result<FailedUnits> {
             .stdin(Stdio::from(
                 echo_child.stdout.expect("Failed to open stdout"),
             ))
-            .stdout(Stdio::piped())
+            // .stdout(Stdio::piped())
             .spawn()?;
 
         // TODO: sendmail
