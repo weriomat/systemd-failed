@@ -124,7 +124,7 @@ fn run_check(mail: String) -> Result<FailedUnits> {
         // pipe
         let output = (Exec::shell("echo").arg(format!("-e {string_to_send}"))
         // let output = (Exec::shell("echo").arg("-e ").arg(string_to_send)
-            | Exec::shell("sendmail").arg(mail).arg("-vv"))
+            | Exec::shell("/run/wrappers/bin/sendmail").arg(mail).arg("-vv"))
         .join()?;
         // .capture()?
         // .stdout_str();
