@@ -111,20 +111,24 @@ fn run_check(mail: String) -> Result<FailedUnits> {
 
         // prepare string to send
         let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
-        let mut string_to_send = String::from(format!("To: {}\r\nFrom: systemd <root@{}>\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=UTF-8\r\nSubject: Failed Systemd-Unit\r\n\r\n", mail,hostname));
+        let mut string_to_send = String::from(format!("\"To: {}\r\nFrom: systemd <root@{}>\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=UTF-8\r\nSubject: Failed Systemd-Unit\r\n\r\n", mail,hostname));
         string_to_send.push_str(&pre);
         string_to_send.push_str(&f);
-        // string_to_send.push_str("\"");
+        string_to_send.push_str("\"");
+        info!("Systemd-failed: string: {string_to_send}");
         // println!("a: {string_to_send}");
 
         // Add failed unit
         fu.add_failed(f);
 
         // pipe
-        let output = (Exec::shell("echo").arg("-e").arg(string_to_send)
-            | Exec::shell("sendmail").arg(mail))
-        .capture()?
-        .stdout_str();
+        let output = (Exec::shell("echo").arg(format!("-e {string_to_send}"))
+        // let output = (Exec::shell("echo").arg("-e ").arg(string_to_send)
+            | Exec::shell("sendmail").arg(mail).arg("-vv"))
+        .join()?;
+        // .capture()?
+        // .stdout_str();
+        info!("Systemd-failed: output: {output:?}");
 
         // send mail
         // echo -e "Content-Type: text/plain\r\nSubject: Test\r\n\r\nHello woiruiwoeurweoiru Worldtesti" | sendmail -vv engel@weriomat.com
@@ -154,7 +158,6 @@ fn run_check(mail: String) -> Result<FailedUnits> {
         //     .spawn()?;
 
         // let output = mails.wait_with_output()?;
-        info!("Systemd-failed: {output:?}");
     }
     Ok(fu)
 }
