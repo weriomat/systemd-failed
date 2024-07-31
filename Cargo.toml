@@ -11,7 +11,7 @@ log = { version = "0.4.21"}
 systemd-journal-logger = "2.1.1"
 
 # for command line args
-# clap = {version = "4.5.8", features = ["derive"]}
+clap = {version = "4.5.8", features = ["derive"]}
 
 # for hostname
 rustix = {version = "0.38.34", features = ["system"]}
