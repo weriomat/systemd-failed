@@ -101,7 +101,7 @@
                   User = "root";
                   Group = "root";
                   Type = "oneshot";
-                  ExecStart = "${self.packages.x86_64-linux.default}";
+                  ExecStart = "${self.packages.x86_64-linux.default}/bin/systemd-failed";
                 };
               };
             };
