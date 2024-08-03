@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use lettre::{message::header::ContentType, Message, SendmailTransport, SmtpTransport};
 use log::{error, info, LevelFilter};
 use rustix;
 use std::{
@@ -84,7 +85,7 @@ impl FailedUnits {
 }
 
 /// Run the check
-fn run_check(mail: String) -> Result<FailedUnits> {
+fn run_check(args: Args) -> Result<FailedUnits> {
     // convert to string
     let mut failed_units = String::from_utf8(
         Command::new("systemctl")
@@ -105,40 +106,61 @@ fn run_check(mail: String) -> Result<FailedUnits> {
     let new_ln = failed_units.find('\n').unwrap_or(failed_units.len());
     let f = failed_units.drain(..new_ln).collect::<String>();
     if !f.is_empty() {
+        // TODO: make this a loop
         // TODO: parse more
         // TODO: systemctl status --full
 
         // prepare string to send
-        let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
-        let mut string_to_send = String::from(format!("\"To: {}\r\nFrom: systemd <root@{}>\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=UTF-8\r\nSubject: Failed Systemd-Unit\r\n\r\n", mail,hostname));
-        string_to_send.push_str(&pre);
-        string_to_send.push_str(&f);
-        string_to_send.push_str("\"");
-        info!("Systemd-failed: string: {string_to_send}");
-        // println!("a: {string_to_send}");
+        // let mut string_to_send = String::from(format!("\"To: {}\r\nFrom: systemd <root@{}>\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=UTF-8\r\nSubject: Failed Systemd-Unit\r\n\r\n", mail,hostname));
+        // string_to_send.push_str(&pre);
+        // string_to_send.push_str(&f);
+        // string_to_send.push_str("\"");
+        // info!("Systemd-failed: string: {string_to_send}");
+        // // println!("a: {string_to_send}");
 
-        // Add failed unit
+        // // Add failed unit
         fu.add_failed(f);
 
         // send mail
+
+        let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
+        let te = format!("systemd <root@{}>", hostname);
+        let to = format!("admin <{}>", args.email);
+        let body = format!("{}\n{}", pre, f);
+        // using lettre
+        // TODO: remove unwarsp
+        let email = Message::builder()
+            .from(te.parse().unwrap())
+            .to(to.parse().unwrap())
+            .subject("Failed Systemd-Unit")
+            .header(ContentType::TEXT_PLAIN)
+            .body(body)
+            .unwrap();
+
+        info!("Systemd-failed: email: {}", email);
+
+        let sender = SendmailTransport::new();
+        let result = sender.send(&email);
+        info!("Systemd-failed: result:")
+        // assert!(result.is_ok());
+
         // echo -e "Content-Type: text/plain\r\nSubject: Test\r\n\r\nHello woiruiwoeurweoiru Worldtesti" | sendmail -vv engel@weriomat.com
-        let echo_child = Command::new("echo")
-            .arg("-e")
-            .arg(string_to_send)
-            .stdout(Stdio::piped())
-            .spawn()?;
+        // let echo_child = Command::new("echo")
+        //     .arg("-e")
+        //     .arg(string_to_send)
+        //     .stdout(Stdio::piped())
+        //     .spawn()?;
 
-        // let mails = Command::new("rev")
-        let mails = Command::new("sendmail")
-            .arg(mail)
-            .stdin(Stdio::from(
-                echo_child.stdout.expect("Failed to open stdout"),
-            ))
-            .stdout(Stdio::piped())
-            .spawn()?;
+        // let mails = Command::new("sendmail")
+        //     .arg(mail)
+        //     .stdin(Stdio::from(
+        //         echo_child.stdout.expect("Failed to open stdout"),
+        //     ))
+        //     .stdout(Stdio::piped())
+        //     .spawn()?;
 
-        let output = mails.wait_with_output()?;
-        info!("Systemd-failed: output: {output:?}");
+        // let output = mails.wait_with_output()?;
+        // info!("Systemd-failed: output: {output:?}");
 
         // TODO: sendmail
         // TODO: parse sendmail
@@ -160,7 +182,7 @@ fn main() {
         return;
     }
 
-    match run_check(args.email) {
+    match run_check(args) {
         Ok(val) => {
             println!("Res: {val:?}");
             if val.number == 0 {
