@@ -110,6 +110,7 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         // TODO: parse more
         // TODO: systemctl status --full
 
+        let body = format!("{}\n{}", pre, f);
         // Add failed unit
         fu.add_failed(f);
 
@@ -117,7 +118,6 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
         let te = format!("systemd <root@{}>", hostname);
         let to = format!("admin <{}>", args.email);
-        let body = format!("{}\n{}", pre, f);
         // using lettre
         // TODO: remove unwarsp
         let email = Message::builder()
@@ -128,11 +128,11 @@ fn run_check(args: Args) -> Result<FailedUnits> {
             .body(body)
             .unwrap();
 
-        info!("Systemd-failed: email: {}", email);
+        info!("Systemd-failed: email: {:?}", email);
 
         let sender = SendmailTransport::new();
         let result = sender.send(&email);
-        info!("Systemd-failed: result: {result} -> {}", result.is_ok());
+        info!("Systemd-failed: result: {result:?} -> {}", result.is_ok());
         // assert!(result.is_ok());
 
         // echo -e "Content-Type: text/plain\r\nSubject: Test\r\n\r\nHello woiruiwoeurweoiru Worldtesti" | sendmail -vv engel@weriomat.com
