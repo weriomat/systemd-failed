@@ -119,14 +119,12 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         let te = format!("systemd <root@{}>", hostname);
         let to = format!("admin <{}>", args.email);
         // using lettre
-        // TODO: remove unwarsp
         let email = Message::builder()
-            .from(te.parse().unwrap())
-            .to(to.parse().unwrap())
+            .from(te.parse()?)
+            .to(to.parse()?)
             .subject("Failed Systemd-Unit")
             .header(ContentType::TEXT_PLAIN)
-            .body(body)
-            .unwrap();
+            .body(body)?;
 
         info!("Systemd-failed: email: {:?}", email);
 
