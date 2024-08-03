@@ -8,7 +8,6 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
-use subprocess::Exec;
 use systemd_journal_logger::JournalLog;
 
 /// Simple program to querry failed systemd units and notify given email
@@ -121,30 +120,25 @@ fn run_check(mail: String) -> Result<FailedUnits> {
         // Add failed unit
         fu.add_failed(f);
 
-        // pipe
-        let output = (Exec::shell("echo").arg(format!("-e {string_to_send}"))
-        // let output = (Exec::shell("echo").arg("-e ").arg(string_to_send)
-            | Exec::shell("/run/wrappers/bin/sendmail").arg(mail).arg("-vv"))
-        // .join()?;
-        .capture()?
-        .stdout_str();
-        info!("Systemd-failed: output: {output:?}");
-
         // send mail
         // echo -e "Content-Type: text/plain\r\nSubject: Test\r\n\r\nHello woiruiwoeurweoiru Worldtesti" | sendmail -vv engel@weriomat.com
-        // let echo_child = Command::new("echo")
-        //     .arg("-e")
-        //     .arg(string_to_send)
-        //     .stdout(Stdio::piped())
-        //     .spawn()?;
+        let echo_child = Command::new("echo")
+            .arg("-e")
+            .arg(string_to_send)
+            .stdout(Stdio::piped())
+            .spawn()?;
 
-        // let mails = Command::new("sendmail")
-        //     .arg(mail)
-        //     .stdin(Stdio::from(
-        //         echo_child.stdout.expect("Failed to open stdout"),
-        //     ))
-        //     .stdout(Stdio::piped())
-        //     .spawn()?;
+        let mails = Command::new("rev")
+            // let mails = Command::new("sendmail")
+            // .arg(mail)
+            .stdin(Stdio::from(
+                echo_child.stdout.expect("Failed to open stdout"),
+            ))
+            .stdout(Stdio::piped())
+            .spawn()?;
+
+        let output = mails.wait_with_output()?;
+        info!("Systemd-failed: output: {output:?}");
 
         // TODO: sendmail
         // TODO: parse sendmail
@@ -156,8 +150,6 @@ fn run_check(mail: String) -> Result<FailedUnits> {
         //     ))
         //     .stdout(Stdio::piped())
         //     .spawn()?;
-
-        // let output = mails.wait_with_output()?;
     }
     Ok(fu)
 }

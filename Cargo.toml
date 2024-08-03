@@ -16,10 +16,6 @@ clap = {version = "4.5.8", features = ["derive"]}
 # for hostname
 rustix = {version = "0.38.34", features = ["system"]}
 
-# pipes
-subprocess = "0.2.9"
-
-
 [profile.release]
 lto = true
 codegen-units = 1
