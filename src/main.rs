@@ -117,7 +117,8 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         // send mail
         let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
         let te = format!("systemd <root@{}>", hostname);
-        let to = format!("admin <{}>", args.email);
+        // let to = format!("admin <{}>", args.email);
+        let to = args.email;
         // using lettre
         let email = Message::builder()
             .from(te.parse()?)
