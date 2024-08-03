@@ -105,9 +105,9 @@ fn run_check(args: Args) -> Result<FailedUnits> {
     // get failed units
     let new_ln = failed_units.find('\n').unwrap_or(failed_units.len());
     let f = failed_units.drain(..new_ln).collect::<String>();
+
     if !f.is_empty() {
         // TODO: make this a loop
-        // TODO: parse more
         // TODO: systemctl status --full
 
         // Add failed unit
@@ -129,27 +129,6 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         let sender = SendmailTransport::new();
         let result = sender.send(&email);
         info!("Systemd-failed: result: {result:?} -> {}", result.is_ok());
-
-        // echo -e "Content-Type: text/plain\r\nSubject: Test\r\n\r\nHello woiruiwoeurweoiru Worldtesti" | sendmail -vv engel@weriomat.com
-        // let echo_child = Command::new("echo")
-        //     .arg("-e")
-        //     .arg(string_to_send)
-        //     .stdout(Stdio::piped())
-        //     .spawn()?;
-
-        // let mails = Command::new("sendmail")
-        //     .arg(mail)
-        //     .stdin(Stdio::from(
-        //         echo_child.stdout.expect("Failed to open stdout"),
-        //     ))
-        //     .stdout(Stdio::piped())
-        //     .spawn()?;
-
-        // let output = mails.wait_with_output()?;
-        // info!("Systemd-failed: output: {output:?}");
-
-        // TODO: sendmail
-        // TODO: parse sendmail
     }
     Ok(fu)
 }
