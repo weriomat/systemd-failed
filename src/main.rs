@@ -107,16 +107,13 @@ fn run_check(args: Args) -> Result<FailedUnits> {
 
         let failed_unit_full_output = String::from_utf8(
             Command::new("systemctl")
-                .args(vec![
-                    "status".into(), //"--full".into(),
-                    f.clone(),
-                ])
+                .args(vec!["status".into(), "--full".into(), f.clone()])
                 .output()?
                 .stdout
                 .as_slice()
                 .to_vec(),
         )?;
-        info!("asdfkj: {}", failed_unit_full_output);
+        info!("asdfkj: f: {} -> {}", f, failed_unit_full_output);
         let body = format!(
             "{}\r\n{}\r\n\r\nFull Output:\r\n{}",
             pre, f, failed_unit_full_output
