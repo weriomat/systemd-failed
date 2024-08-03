@@ -107,9 +107,7 @@ fn run_check(args: Args) -> Result<FailedUnits> {
 
         let failed_unit_full_output = String::from_utf8(
             Command::new("systemctl")
-                .arg("status")
-                .arg("--full")
-                .arg(f.clone())
+                .args(vec!["status".into(), "--full".into(), f.clone()])
                 .output()?
                 .stdout
                 .as_slice()
