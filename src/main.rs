@@ -124,11 +124,8 @@ fn run_check(args: Args) -> Result<FailedUnits> {
             .header(ContentType::TEXT_PLAIN)
             .body(format!("{}\n{}", pre, f))?;
 
-        info!("Systemd-failed: email: {:?}", email);
-
         let sender = SendmailTransport::new();
         let result = sender.send(&email);
-        info!("Systemd-failed: result: {result:?} -> {}", result.is_ok());
     }
     Ok(fu)
 }
