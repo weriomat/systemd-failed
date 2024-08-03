@@ -115,8 +115,9 @@ fn run_check(args: Args) -> Result<FailedUnits> {
                 .as_slice()
                 .to_vec(),
         )?;
+        info!("asdfkj: {}", failed_unit_full_output);
         let body = format!(
-            "{}\n{}\r\n\r\nFull Output:\r\n{}",
+            "{}\r\n{}\r\n\r\nFull Output:\r\n{}",
             pre, f, failed_unit_full_output
         );
 
