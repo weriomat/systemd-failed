@@ -110,6 +110,8 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         // TODO: make this a loop
         // TODO: systemctl status --full
 
+        let body = format!("{}\n{}", pre, f);
+
         // Add failed unit
         fu.add_failed(f);
 
@@ -122,7 +124,7 @@ fn run_check(args: Args) -> Result<FailedUnits> {
             .to((format!("admin <{}>", args.email)).parse()?)
             .subject("Failed Systemd-Unit")
             .header(ContentType::TEXT_PLAIN)
-            .body(format!("{}\n{}", pre, f))?;
+            .body(body)?;
 
         let sender = SendmailTransport::new();
         let result = sender.send(&email);
