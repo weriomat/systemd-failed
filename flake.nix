@@ -46,6 +46,10 @@
 
             pkgs.hyperfine
             # hyperfine --show-output --warmup 5 --min-runs 10 "./target/release/filestat --path /home/marts"
+
+            # mail
+            pkgs.pkg-config
+            pkgs.openssl
           ];
         in {
           devShells = rec {
