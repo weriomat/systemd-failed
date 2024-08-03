@@ -128,9 +128,9 @@ fn run_check(mail: String) -> Result<FailedUnits> {
             .stdout(Stdio::piped())
             .spawn()?;
 
-        let mails = Command::new("rev")
-            // let mails = Command::new("sendmail")
-            // .arg(mail)
+        // let mails = Command::new("rev")
+        let mails = Command::new("sendmail")
+            .arg(mail)
             .stdin(Stdio::from(
                 echo_child.stdout.expect("Failed to open stdout"),
             ))
@@ -142,14 +142,6 @@ fn run_check(mail: String) -> Result<FailedUnits> {
 
         // TODO: sendmail
         // TODO: parse sendmail
-
-        // let sed_child = Command::new("sed")
-        //     .arg("weiur")
-        //     .stdin(Stdio::from(
-        //         echo_child.stdout.expect("Failed to open echo stdout"),
-        //     ))
-        //     .stdout(Stdio::piped())
-        //     .spawn()?;
     }
     Ok(fu)
 }
@@ -169,7 +161,6 @@ fn main() {
     }
 
     match run_check(args.email) {
-        // match run_check("engel@weriomat.com".into()) {
         Ok(val) => {
             println!("Res: {val:?}");
             if val.number == 0 {
