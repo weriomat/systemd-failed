@@ -66,6 +66,14 @@
                 lockFile = ./Cargo.lock;
               };
             };
+
+            send-email = pkgs.writeShellApplication {
+              name = "send-email";
+              runtimeInputs = with pkgs; [msmtp];
+              text = ''
+                echo -e "$1" | sendmail "$2"
+              '';
+            };
           };
         }
       )
