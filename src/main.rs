@@ -103,8 +103,21 @@ fn run_check(args: Args) -> Result<FailedUnits> {
     if !f.is_empty() {
         // TODO: make this a loop
         // TODO: systemctl status --full
+        // TODO: cache units and send mail when resolved
 
-        let body = format!("{}\n{}", pre, f);
+        let failed_unit_full_output = String::from_utf8(
+            Command::new("systemctl status")
+                .arg("--full")
+                .arg(f.clone())
+                .output()?
+                .stdout
+                .as_slice()
+                .to_vec(),
+        )?;
+        let body = format!(
+            "{}\n{}\r\n\r\nFull Output:\r\n{}",
+            pre, f, failed_unit_full_output
+        );
 
         // Add failed unit
         fu.add_failed(f);
