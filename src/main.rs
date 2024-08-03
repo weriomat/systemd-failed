@@ -1,14 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
-use lettre::{message::header::ContentType, Message, SendmailTransport, SmtpTransport, Transport};
+use lettre::{message::header::ContentType, Message, SendmailTransport, Transport};
 use log::{error, info, LevelFilter};
-use rustix;
-use std::{
-    borrow::Cow,
-    fmt::Display,
-    process::{Command, Stdio},
-    str::FromStr,
-};
+use std::{borrow::Cow, fmt::Display, process::Command, str::FromStr};
 use systemd_journal_logger::JournalLog;
 
 /// Simple program to querry failed systemd units and notify given email
@@ -127,7 +121,7 @@ fn run_check(args: Args) -> Result<FailedUnits> {
             .body(body)?;
 
         let sender = SendmailTransport::new();
-        let result = sender.send(&email);
+        sender.send(&email)?;
     }
     Ok(fu)
 }
