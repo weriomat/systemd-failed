@@ -76,6 +76,9 @@ impl FailedUnits {
             Err(err) => error!("Systemd Failed: Cannot Trim Start: {err}"),
         }
     }
+    pub fn get_failed(&self) -> Option<&String> {
+        self.names.first()
+    }
 }
 
 /// Run the check
@@ -105,9 +108,14 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         // TODO: systemctl status --full
         // TODO: cache units and send mail when resolved
 
+        // Add failed unit
+        fu.add_failed(f.clone());
+
+        // TODO: here
+        let unit = fu.get_failed().unwrap();
         let failed_unit_full_output = String::from_utf8(
             Command::new("systemctl")
-                .args(vec!["status".into(), "--full".into(), f.clone()])
+                .args(vec!["status", "--full", unit])
                 .output()?
                 .stdout
                 .as_slice()
@@ -118,9 +126,6 @@ fn run_check(args: Args) -> Result<FailedUnits> {
             "{}\r\n{}\r\n\r\nFull Output:\r\n{}",
             pre, f, failed_unit_full_output
         );
-
-        // Add failed unit
-        fu.add_failed(f);
 
         // send mail
         let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
