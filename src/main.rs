@@ -106,7 +106,8 @@ fn run_check(args: Args) -> Result<FailedUnits> {
         // TODO: cache units and send mail when resolved
 
         let failed_unit_full_output = String::from_utf8(
-            Command::new("systemctl status")
+            Command::new("systemctl")
+                .arg("status")
                 .arg("--full")
                 .arg(f.clone())
                 .output()?
