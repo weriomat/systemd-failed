@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use lettre::{message::header::ContentType, Message, SendmailTransport, SmtpTransport};
+use lettre::{message::header::ContentType, Message, SendmailTransport, SmtpTransport, Transport};
 use log::{error, info, LevelFilter};
 use rustix;
 use std::{
