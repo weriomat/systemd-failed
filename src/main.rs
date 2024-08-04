@@ -157,7 +157,6 @@ fn main() {
 
     match run_check(args) {
         Ok(val) => {
-            println!("Res: {val:?}");
             if val.number == 0 {
                 info!("Systemd failed: {val}");
             } else {
