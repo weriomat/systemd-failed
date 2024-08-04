@@ -99,9 +99,10 @@ impl FailedUnits {
         }
     }
 
-    pub fn mail(&self, args: Args, pre: String) -> Result<()> {
+    pub fn mail(&self, args: Args) -> Result<()> {
+        // TODO: optimize format!
         // construct the body of the email
-        let mut body = format!("{}\r\n", pre);
+        let mut body = String::from("Failed units:");
         let mut full = String::from("Systemctl status output of failed units\r\n");
 
         for i in self.names.iter().enumerate() {
@@ -131,7 +132,7 @@ impl FailedUnits {
 /// Run the check
 fn run_check(args: Args) -> Result<FailedUnits> {
     // convert to string
-    let mut failed_units = String::from_utf8(
+    let failed_units = String::from_utf8(
         Command::new("systemctl")
             .arg("--failed")
             .output()?
@@ -140,24 +141,23 @@ fn run_check(args: Args) -> Result<FailedUnits> {
             .to_vec(),
     )?;
 
-    // discard header
-    let beta_offset = failed_units.find('●').unwrap_or(failed_units.len());
-    let pre = failed_units.drain(..beta_offset).collect::<String>();
-
     let mut fu = FailedUnits::new();
 
-    // get failed units
-    let new_ln = failed_units.find('\n').unwrap_or(failed_units.len());
-    let f = failed_units.drain(..new_ln).collect::<String>();
-
-    if !f.is_empty() {
-        // TODO: make this a loop
-        // TODO: cache units and send mail when resolved
-
-        // Add failed unit
-        fu.add_failed(f);
-        fu.mail(args, pre)?;
+    // TODO: use memchr
+    // parse each line
+    for line in failed_units.lines() {
+        // we trim the start so we just take the lines starting with '●'
+        if line.trim_start().starts_with('●') {
+            fu.add_failed(line.into());
+        }
     }
+
+    if fu.number != 0 {
+        // TODO: cache units and send mail when resolved
+        // in case we have a failed unit -> send email
+        fu.mail(args)?;
+    }
+
     Ok(fu)
 }
 
