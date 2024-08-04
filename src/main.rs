@@ -60,42 +60,30 @@ impl FailedUnits {
         // NOTE: cow is dumb here
         let cow = Cow::from(s);
         self.messages.push(cow.clone().into_owned());
+        // get first whitespace and drop everything else
 
-        match String::from_str(cow.as_ref().trim_start()) {
-            Ok(mut st) => {
-                let beta_offset = st.find('●').unwrap_or(st.len());
-                let _ = st.drain(..beta_offset).collect::<String>();
-                match st.split_once(' ') {
-                    Some((_, ac)) => match ac.split_once(' ') {
-                        Some((ab, _)) => {
-                            let tmp: String = ab.into();
-                            match Command::new("systemctl")
-                                .args(vec!["status", "--full", tmp.as_str()])
-                                .output()
-                            {
-                                Ok(o) => {
-                                    // this should not fail
-                                    match String::from_utf8(o.stdout.as_slice().to_vec()) {
-                                        Ok(fuo) => {
-                                            self.systemctl_full.push(fuo);
-                                        }
-                                        Err(err) => {
-                                            error!("Systemd failed: Cannot convert the output of `systemctl status --full {}` -> {err}", tmp.as_str())
-                                        }
-                                    }
-                                }
-                                Err(err) => {
-                                    error!("Systemd failed: Cannot get the result of `systemctl status --full {}` -> {err}", tmp.as_str());
-                                }
-                            }
-                            self.names.push(tmp);
+        let mut iter = cow.as_ref().trim_start().split_whitespace().skip(1);
+        if let Some(unit) = iter.next() {
+            match Command::new("systemctl")
+                .args(vec!["status", "--full", unit])
+                .output()
+            {
+                Ok(o) => {
+                    // this should not fail
+                    match String::from_utf8(o.stdout.as_slice().to_vec()) {
+                        Ok(fuo) => {
+                            self.systemctl_full.push(fuo);
                         }
-                        None => error!("Systemd failed: Cannot split String: {st}"),
-                    },
-                    None => error!("Systemd failed: Cannot split String: {st}"),
+                        Err(err) => {
+                            error!("Systemd failed: Cannot convert the output of `systemctl status --full {}` -> {err}", unit)
+                        }
+                    }
+                }
+                Err(err) => {
+                    error!("Systemd failed: Cannot get the result of `systemctl status --full {}` -> {err}", unit);
                 }
             }
-            Err(err) => error!("Systemd Failed: Cannot Trim Start: {err}"),
+            self.names.push(String::from(unit));
         }
     }
 
