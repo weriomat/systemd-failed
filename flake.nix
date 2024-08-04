@@ -70,7 +70,7 @@
                 lockFile = ./Cargo.lock;
               };
 
-              nativeBuildInputs = [pkgs.pkg-config];
+              nativeBuildInputs = [pkgs.pkg-config pkgs.msmtp];
 
               buildInputs = [pkgs.openssl];
             };
