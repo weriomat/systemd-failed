@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use lettre::{message::header::ContentType, Message, SendmailTransport, Transport};
 use log::{error, info, LevelFilter};
-use std::{borrow::Cow, fmt::Display, process::Command, str::FromStr};
+use std::{fmt::Display, process::Command};
 use systemd_journal_logger::JournalLog;
 
 /// Simple program to querry failed systemd units and notify given email
@@ -17,7 +17,6 @@ struct Args {
 #[derive(Debug)]
 struct FailedUnits {
     number: usize,
-    messages: Vec<String>,
     systemctl_full: Vec<String>,
     names: Vec<String>,
 }
@@ -50,19 +49,15 @@ impl FailedUnits {
     pub fn new() -> Self {
         FailedUnits {
             number: 0,
-            messages: Vec::new(),
             names: Vec::new(),
             systemctl_full: Vec::new(),
         }
     }
     pub fn add_failed(&mut self, s: String) {
         self.number += 1;
-        // NOTE: cow is dumb here
-        let cow = Cow::from(s);
-        self.messages.push(cow.clone().into_owned());
-        // get first whitespace and drop everything else
 
-        let mut iter = cow.as_ref().trim_start().split_whitespace().skip(1);
+        // get first whitespace and drop everything else
+        let mut iter = s.as_str().trim_start().split_whitespace().skip(1);
         if let Some(unit) = iter.next() {
             match Command::new("systemctl")
                 .args(vec!["status", "--full", unit])
@@ -143,7 +138,7 @@ fn run_check(args: Args) -> Result<FailedUnits> {
     if fu.number != 0 {
         // TODO: cache units and send mail when resolved
         // in case we have a failed unit -> send email
-        fu.mail(args)?;
+        // fu.mail(args)?;
     }
 
     Ok(fu)
