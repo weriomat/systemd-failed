@@ -18,6 +18,7 @@ struct Args {
 struct FailedUnits {
     number: usize,
     messages: Vec<String>,
+    systemctl_full: Vec<String>,
     names: Vec<String>,
 }
 
@@ -51,6 +52,7 @@ impl FailedUnits {
             number: 0,
             messages: Vec::new(),
             names: Vec::new(),
+            systemctl_full: Vec::new(),
         }
     }
     pub fn add_failed(&mut self, s: String) {
@@ -66,7 +68,27 @@ impl FailedUnits {
                 match st.split_once(' ') {
                     Some((_, ac)) => match ac.split_once(' ') {
                         Some((ab, _)) => {
-                            self.names.push(ab.into());
+                            let tmp: String = ab.into();
+                            match Command::new("systemctl")
+                                .args(vec!["status", "--full", tmp.as_str()])
+                                .output()
+                            {
+                                Ok(o) => {
+                                    // this should not fail
+                                    match String::from_utf8(o.stdout.as_slice().to_vec()) {
+                                        Ok(fuo) => {
+                                            self.systemctl_full.push(fuo);
+                                        }
+                                        Err(err) => {
+                                            error!("Systemd failed: Cannot convert the output of `systemctl status --full {}` -> {err}", tmp.as_str())
+                                        }
+                                    }
+                                }
+                                Err(err) => {
+                                    error!("Systemd failed: Cannot get the result of `systemctl status --full {}` -> {err}", tmp.as_str());
+                                }
+                            }
+                            self.names.push(tmp);
                         }
                         None => error!("Systemd failed: Cannot split String: {st}"),
                     },
@@ -76,8 +98,33 @@ impl FailedUnits {
             Err(err) => error!("Systemd Failed: Cannot Trim Start: {err}"),
         }
     }
-    pub fn get_failed(&self) -> Option<&String> {
-        self.names.first()
+
+    pub fn mail(&self, args: Args, pre: String) -> Result<()> {
+        // construct the body of the email
+        let mut body = format!("{}\r\n", pre);
+        let mut full = String::from("Systemctl status output of failed units\r\n");
+
+        for i in self.names.iter().enumerate() {
+            body = format!("{}\r\n{}", body, i.1);
+            full = format!("{}\r\n\r\n\r\n{}", full, self.systemctl_full[i.0]);
+        }
+
+        body = format!("{}\r\n\r\n{}", body, full);
+
+        // send mail
+        let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
+
+        // using lettre
+        let email = Message::builder()
+            .from((format!("systemd {} <mail@weriomat.com>", hostname)).parse()?)
+            .to((format!("admin <{}>", args.email)).parse()?)
+            .subject("Failed Systemd-Units")
+            .header(ContentType::TEXT_PLAIN)
+            .body(body)?;
+
+        let sender = SendmailTransport::new();
+        sender.send(&email)?;
+        Ok(())
     }
 }
 
@@ -105,41 +152,11 @@ fn run_check(args: Args) -> Result<FailedUnits> {
 
     if !f.is_empty() {
         // TODO: make this a loop
-        // TODO: systemctl status --full
         // TODO: cache units and send mail when resolved
 
         // Add failed unit
-        fu.add_failed(f.clone());
-
-        // TODO: here
-        let unit = fu.get_failed().unwrap();
-        let failed_unit_full_output = String::from_utf8(
-            Command::new("systemctl")
-                .args(vec!["status", "--full", unit])
-                .output()?
-                .stdout
-                .as_slice()
-                .to_vec(),
-        )?;
-        info!("asdfkj: f: {} -> {}", f, failed_unit_full_output);
-        let body = format!(
-            "{}\r\n{}\r\n\r\nFull Output:\r\n{}",
-            pre, f, failed_unit_full_output
-        );
-
-        // send mail
-        let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
-
-        // using lettre
-        let email = Message::builder()
-            .from((format!("systemd {} <mail@weriomat.com>", hostname)).parse()?)
-            .to((format!("admin <{}>", args.email)).parse()?)
-            .subject("Failed Systemd-Unit")
-            .header(ContentType::TEXT_PLAIN)
-            .body(body)?;
-
-        let sender = SendmailTransport::new();
-        sender.send(&email)?;
+        fu.add_failed(f);
+        fu.mail(args, pre)?;
     }
     Ok(fu)
 }
