@@ -71,8 +71,9 @@
               };
 
               nativeBuildInputs = [pkgs.pkg-config pkgs.msmtp];
-
               buildInputs = [pkgs.openssl];
+
+              runtimeInputs = [pkgs.msmtp];
             };
           };
         }
