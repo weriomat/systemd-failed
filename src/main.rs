@@ -110,7 +110,7 @@ impl FailedUnits {
             full = format!("{}\r\n\r\n\r\n{}", full, self.systemctl_full[i.0]);
         }
 
-        body = format!("{}\r\n\r\n{}", body, full);
+        body = format!("{}\r\n{}", body, full);
 
         // send mail
         let hostname = String::from_utf8(rustix::system::uname().nodename().to_bytes().to_vec())?;
