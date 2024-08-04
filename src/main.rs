@@ -57,23 +57,20 @@ impl FailedUnits {
         self.number += 1;
 
         // get first whitespace and drop everything else
-        let mut iter = s.as_str().trim_start().split_whitespace().skip(1);
+        let mut iter = s.as_str().split_whitespace().skip(1);
         if let Some(unit) = iter.next() {
             match Command::new("systemctl")
                 .args(vec!["status", "--full", unit])
                 .output()
             {
-                Ok(o) => {
-                    // this should not fail
-                    match String::from_utf8(o.stdout.as_slice().to_vec()) {
-                        Ok(fuo) => {
-                            self.systemctl_full.push(fuo);
-                        }
-                        Err(err) => {
-                            error!("Systemd failed: Cannot convert the output of `systemctl status --full {}` -> {err}", unit)
-                        }
+                Ok(o) => match String::from_utf8(o.stdout.as_slice().to_vec()) {
+                    Ok(fuo) => {
+                        self.systemctl_full.push(fuo);
                     }
-                }
+                    Err(err) => {
+                        error!("Systemd failed: Cannot convert the output of `systemctl status --full {}` -> {err}", unit)
+                    }
+                },
                 Err(err) => {
                     error!("Systemd failed: Cannot get the result of `systemctl status --full {}` -> {err}", unit);
                 }
@@ -83,14 +80,15 @@ impl FailedUnits {
     }
 
     pub fn mail(&self, args: Args) -> Result<()> {
-        // TODO: optimize format!
         // construct the body of the email
         let mut body = String::from("Failed units:\r\n");
-        let mut full = String::from("Systemctl status output of failed units\r\n");
+        let mut full = String::from("Systemctl status output of failed units:\r\n");
 
         for i in self.names.iter().enumerate() {
-            body = format!("{}\r\n{}", body, i.1);
-            full = format!("{}\r\n\r\n\r\n{}", full, self.systemctl_full[i.0]);
+            body += "\r\n";
+            body += i.1;
+            full += "\r\n\r\n\r\n";
+            full += &self.systemctl_full[i.0];
         }
 
         body = format!("{}\r\n\r\n{}", body, full);
@@ -106,8 +104,7 @@ impl FailedUnits {
             .header(ContentType::TEXT_PLAIN)
             .body(body)?;
 
-        let sender = SendmailTransport::new();
-        sender.send(&email)?;
+        SendmailTransport::new().send(&email)?;
         Ok(())
     }
 }
@@ -138,7 +135,7 @@ fn run_check(args: Args) -> Result<FailedUnits> {
     if fu.number != 0 {
         // TODO: cache units and send mail when resolved
         // in case we have a failed unit -> send email
-        // fu.mail(args)?;
+        fu.mail(args)?;
     }
 
     Ok(fu)
