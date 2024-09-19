@@ -86,12 +86,14 @@
           config,
           lib,
           ...
-        }: {
-          # TODO: make minutes a optino
+        }: let
+          cfg = config.services.systemd-failed;
+        in {
           options.services.systemd-failed = {
             enable = lib.mkEnableOption "Systemd-failed";
           };
-          config = {
+
+          config = lib.mkIf cfg.enable {
             systemd = {
               timers.systemd-failed = {
                 wantedBy = ["timers.target"];
@@ -107,8 +109,6 @@
                 after = ["network.target"];
                 wantedBy = ["multi-user.target"];
                 serviceConfig = {
-                  User = "root";
-                  Group = "root";
                   Type = "oneshot";
                   ExecStart = "${self.packages.x86_64-linux.default}/bin/systemd-failed";
                 };
